@@ -916,6 +916,8 @@ namespace CSharpKit
             public int PLCNode { get; set; }
             public int LocalNode { get; set; }
 
+            public Channel<ClientData> DataCache = Channel.CreateUnbounded<ClientData>();
+
             #region 作为服务端时存储的数据
             public Register DRegister = new();
             public Register WRegister = new();
@@ -926,6 +928,7 @@ namespace CSharpKit
             {
                 PLCNode = plcNode;
                 LocalNode = localNode;
+                Task.Run(ProcessData);
             }
 
             public FinsTCP()
@@ -945,7 +948,7 @@ namespace CSharpKit
             /// <returns>所需16进制字符串握手指令</returns>
             public static string HandshakeString(int localAddress)
             {
-                return $"{GetFinsHeader(12, 0)} {localAddress:X8}";
+                return $"{GetFinsHeader(12, 0)}{localAddress:X8}";
             }
             /// <summary>
             /// 计算数据所占地址长度
@@ -1106,7 +1109,7 @@ namespace CSharpKit
                 inputData.CopyTo(register, address * 2);
             }
 
-            public byte[] ProcessRegister(byte[] finsData, int node)
+            public byte[] ProcessRegister(byte[] finsData, int serverNode)
             {
                 if (ParseHeader(finsData, out int finsDataLength, out int command))
                 {
@@ -1115,7 +1118,7 @@ namespace CSharpKit
                         var header = GetFinsHeader(16, 1);
                         var headerBytes = DataConverter.HexStringToBytes(header);
                         var clientNodeBytes = BytesTool.CutBytesByLength(finsData, 16, 4);
-                        var serverNodeBytes = DataConverter.ValueToBytes(node);
+                        var serverNodeBytes = DataConverter.ValueToBytes(serverNode);
                         return BytesTool.SpliceBytes(headerBytes, clientNodeBytes, serverNodeBytes);
                     }
                     else if (command == 2 && finsData.Length >= 34)
@@ -1123,7 +1126,7 @@ namespace CSharpKit
                         if (finsData[26] == 0x01 && finsData[27] == 0x02)//写入
                         {
                             ushort address = (ushort)DataConverter.BytesToUInt([finsData[29], finsData[30]]);
-                            byte[] data = BytesTool.CutBytesByLength(finsData, 34, finsData.Length - 34);
+                            byte[] data = BytesTool.CutBytesByLength(finsData, 34, finsDataLength - 26);
 
                             switch (finsData[28])
                             {
@@ -1181,6 +1184,23 @@ namespace CSharpKit
                 return [0x00];
             }
             #endregion
+
+            public async Task ProcessData()
+            {
+                while (await DataCache.Reader.WaitToReadAsync())
+                {
+                    if (DataCache.Reader.TryRead(out var clientData))
+                    {
+                        while (FinsTCP.ParseHeader(clientData.Data, out int dataLength, out _))
+                        {
+                            clientData.Client?.Send(ProcessRegister(clientData.Data, PLCNode));
+                            clientData.Data[0] = 0x00;//数据解析完毕，更改fins帧头
+                            BytesTool.ProcessDataCache(clientData.Data, dataLength + 8);
+                        }
+                    }
+                }
+            }
+
         }
 
         public class CRC16
@@ -1400,7 +1420,6 @@ namespace CSharpKit
             /// <param name="clearLength">清除数据的长度</param>
             public void ClearDataCache(int clearLength)
             {
-                //byte[] tempData = new byte[clearLength];
                 for (int i = 0; i < DataCache.Length - clearLength; i++)
                 {
                     DataCache[i] = DataCache[clearLength + i];
@@ -1919,6 +1938,19 @@ namespace CSharpKit
             #endregion
 
             /// <summary>
+            /// 将后面的字节按长度覆盖前面的字节值
+            /// </summary>
+            /// <param name="dataCache">操作的字节</param>
+            /// <param name="clearLength">要覆盖的字节长度</param>
+            public static void ProcessDataCache(byte[] dataCache, int clearLength)
+            {
+                if (clearLength > dataCache.Length) return;
+                for (int i = 0; i < dataCache.Length - clearLength; i++)
+                {
+                    dataCache[i] = dataCache[clearLength + i];
+                }
+            }
+            /// <summary>
             /// 字节按每个字颠倒
             /// </summary>
             /// <param name="bytes">要调整的字节</param>
@@ -1956,6 +1988,18 @@ namespace CSharpKit
                 return (byteValue & val) == val;
             }
 
+            public static bool GetBit(byte[] bytesValue, ushort index, bool isReverse = true)
+            {
+                if (isReverse) Array.Reverse(bytesValue);
+                if (index > 8 * bytesValue.Length - 1) throw new ArgumentOutOfRangeException("index");
+                for (int i = 0; i < bytesValue.Length; i++)
+                {
+                    if (index > (i * 8 - 1) && index < (i + 1) * 8)
+                        return GetBit(bytesValue[i], (ushort)(index - i * 8));
+                }
+                return false;
+            }
+
             public static byte SetBit(byte byteValue, ushort index, bool bitValue)
             {
                 if (index > 7) throw new ArgumentOutOfRangeException("index");
@@ -1964,7 +2008,9 @@ namespace CSharpKit
             }
 
         }
-
+        /// <summary>
+        /// 2字节寄存器
+        /// </summary>
         public class Register
         {
             public byte[] Data { get; private set; }

@@ -59,9 +59,21 @@ namespace FINSServer
         {
             while (await connection.ClientDataChannel.Reader.WaitToReadAsync())
             {
-                if (connection.ClientDataChannel.Reader.TryRead(out var clientData))
+                try
                 {
-                    clientData.Client.Send(finsServer.ProcessRegister(clientData.Data, int.Parse(TSTBIP.Text.Split('.')[3])));
+                    if (connection.ClientDataChannel.Reader.TryRead(out var clientData))
+                    {
+                        while (FinsTCP.ParseHeader(clientData.Data, out int dataLength, out _))
+                        {
+                            clientData.Client?.Send(finsServer.ProcessRegister(clientData.Data, int.Parse(TSTBIP.Text.Split('.')[3])));
+                            clientData.Data[0] = 0x00;//数据解析完毕，更改fins帧头
+                            BytesTool.ProcessDataCache(clientData.Data, dataLength + 8);
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    
                 }
             }
         }
@@ -105,7 +117,7 @@ namespace FINSServer
         {
             finsServer.DRegister.Write(0, [0x00, 0x01]);
             finsServer.DRegister.Write(2, [0x00, 0x02]);
-            finsServer.WRegister.Write(3, [0x00, 0x03]);
+            finsServer.WRegister.Write(2, [0x00, 0x03]);
             finsServer.WRegister.Write(30, [0x00, 0x04]);
             finsServer.WRegister.Write(32, [0x00, 0x05]);
             finsServer.HRegister.Write(0, [0xFF, 0xFF]);
@@ -115,7 +127,10 @@ namespace FINSServer
 
         private void BTN测试_Click(object sender, EventArgs e)
         {
-            var v = BitConverter.GetBytes(1);
+            
         }
+
+
+
     }
 }
