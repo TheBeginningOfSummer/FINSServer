@@ -127,7 +127,12 @@ namespace FINSServer
 
         private void BTN≤‚ ‘_Click(object sender, EventArgs e)
         {
-            
+
+            int[] v = new int[10];
+            foreach (var item in v)
+            {
+                TBInfo.Text += $"{item}{Environment.NewLine}";
+            }
         }
 
 
