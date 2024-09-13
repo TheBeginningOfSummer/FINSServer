@@ -65,6 +65,7 @@ namespace FINSServer
                     {
                         while (FinsTCP.ParseHeader(clientData.Data, out int dataLength, out _))
                         {
+                            //Thread.Sleep(100);
                             clientData.Client?.Send(finsServer.ProcessRegister(clientData.Data, int.Parse(TSTBIP.Text.Split('.')[3])));
                             clientData.Data[0] = 0x00;//数据解析完毕，更改fins帧头
                             BytesTool.ProcessDataCache(clientData.Data, dataLength + 8);

@@ -1141,6 +1141,7 @@ namespace CSharpKit
                                     break;
                             }
                             byte[] result = BytesTool.CutBytesByLength(finsData, 0, 28);
+                            result[7] = 0x16;//写入后返回的字节数量不一样
                             result[16] = 0xC0;
                             return BytesTool.SpliceBytes(result, [0x00, 0x00]);
                         }
