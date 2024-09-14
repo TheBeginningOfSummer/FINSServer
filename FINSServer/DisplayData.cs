@@ -66,9 +66,9 @@ namespace FINSServer
             try
             {
                 if (displayMode == 0)
-                    Register.Write(ushort.Parse(TB地址.Text), DataConverter.ValueToBytes(ushort.Parse(TB设置值.Text)));
+                    Register.Write(ushort.Parse(CB地址.Text), DataConverter.ValueToBytes(ushort.Parse(CB数据.Text)));
                 if (displayMode == 1)
-                    Register.Write(ushort.Parse(TB地址.Text), Encoding.ASCII.GetBytes(TB设置值.Text));
+                    Register.Write(ushort.Parse(CB地址.Text), Encoding.ASCII.GetBytes(CB数据.Text));
             }
             catch (Exception ex)
             {

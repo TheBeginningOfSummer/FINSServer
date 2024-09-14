@@ -33,10 +33,10 @@
             RBASCII = new RadioButton();
             CK字节顺序 = new CheckBox();
             BTN设置寄存器 = new Button();
-            TB设置值 = new TextBox();
             label1 = new Label();
-            TB地址 = new TextBox();
             label2 = new Label();
+            CB地址 = new ComboBox();
+            CB数据 = new ComboBox();
             SuspendLayout();
             // 
             // TBDisplay
@@ -101,15 +101,6 @@
             BTN设置寄存器.UseVisualStyleBackColor = true;
             BTN设置寄存器.Click += BTN设置寄存器_Click;
             // 
-            // TB设置值
-            // 
-            TB设置值.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            TB设置值.Location = new Point(512, 410);
-            TB设置值.Name = "TB设置值";
-            TB设置值.Size = new Size(100, 23);
-            TB设置值.TabIndex = 5;
-            TB设置值.Text = "0";
-            // 
             // label1
             // 
             label1.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -119,15 +110,6 @@
             label1.Size = new Size(20, 17);
             label1.TabIndex = 6;
             label1.Text = "值";
-            // 
-            // TB地址
-            // 
-            TB地址.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            TB地址.Location = new Point(423, 410);
-            TB地址.Name = "TB地址";
-            TB地址.Size = new Size(57, 23);
-            TB地址.TabIndex = 7;
-            TB地址.Text = "0";
             // 
             // label2
             // 
@@ -139,15 +121,37 @@
             label2.TabIndex = 8;
             label2.Text = "地址";
             // 
+            // CB地址
+            // 
+            CB地址.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            CB地址.FormattingEnabled = true;
+            CB地址.Items.AddRange(new object[] { "3", "36" });
+            CB地址.Location = new Point(423, 410);
+            CB地址.Name = "CB地址";
+            CB地址.Size = new Size(50, 25);
+            CB地址.TabIndex = 9;
+            CB地址.Text = "0";
+            // 
+            // CB数据
+            // 
+            CB数据.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            CB数据.FormattingEnabled = true;
+            CB数据.Items.AddRange(new object[] { "0", ":9" });
+            CB数据.Location = new Point(512, 410);
+            CB数据.Name = "CB数据";
+            CB数据.Size = new Size(100, 25);
+            CB数据.TabIndex = 10;
+            CB数据.Text = "0";
+            // 
             // DisplayData
             // 
             AutoScaleDimensions = new SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(705, 444);
+            Controls.Add(CB数据);
+            Controls.Add(CB地址);
             Controls.Add(label2);
-            Controls.Add(TB地址);
             Controls.Add(label1);
-            Controls.Add(TB设置值);
             Controls.Add(BTN设置寄存器);
             Controls.Add(CK字节顺序);
             Controls.Add(RBASCII);
@@ -167,9 +171,9 @@
         private RadioButton RBASCII;
         private CheckBox CK字节顺序;
         private Button BTN设置寄存器;
-        private TextBox TB设置值;
         private Label label1;
-        private TextBox TB地址;
         private Label label2;
+        private ComboBox CB地址;
+        private ComboBox CB数据;
     }
 }
